@@ -1,11 +1,21 @@
 const inquirer = require('inquirer');
+// get the client
+const mysql = require('mysql2');
+const cTable = require('console.table');
+
+// create the connection to database
+const db = mysql.createConnection({
+  host: 'localhost',
+  user: 'root',
+  database: 'employee_tracker_db'
+});
 
 const employeeQuestions = [
     {
         type: 'list',
         name: 'menu',
         message: "What would you like to do?",
-        choices: ['Add Employee', 'Update Employee Role', 'View All Roles', 'Add Role', 'View All Departments', 'Add Department', 'Quit'],
+        choices: ['Add Employee', 'Update Employee Role', 'View All Roles', 'Add Role', 'View All Departments', 'Add Department', 'Quit']
     },
     {
         type: 'input',
@@ -70,18 +80,52 @@ async function promptQuestions() {
 
 const questionAnswers = [];
 
+
 async function init() {
+    // db.query(
+    //     'SELECT * FROM department',
+    //     function(err, results, fields) {
+    //         console.log('\n');
+    //         console.table(results);
+    //     }
+    // );
 
     let keepAsking = true;
     while(keepAsking) {
         const answers = await promptQuestions();
 
-        if(await answers.menu !== 'Quit') {
-            questionAnswers.push(answers);
-        } else {
+        if(await answers.menu === 'Quit') {
+            // questionAnswers.push(answers);
             keepAsking = false;
+        } else if (await answers.menu === 'View All Departments') {
+            db.query(
+                'SELECT * FROM department',
+                function(err, results, fields) {
+                    console.log('\n');
+                    console.table(results);
+                    for(var i = 0; i < results.length; i++) {
+                        console.log('\n');
+                    }
+                    console.log('\n');
+                }
+            );
+        } else if (await answers.menu === 'View All Roles') {
+            db.query(
+                'SELECT * FROM roles',
+                function(err, results, fields) {
+                    console.log('\n');
+                    console.table(results);
+                    for(var i = 0; i < results.length; i++) {
+                        console.log('\n');
+                    }
+                    console.log('\n');
+                }
+            );
+        } else {
+            // keepAsking = false;
         }
     }
+    console.log(questionAnswers);
 }
 
 init();
