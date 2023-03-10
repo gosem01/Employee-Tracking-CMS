@@ -227,7 +227,6 @@ async function init() {
             // keepAsking = false;
         }
     }
-    console.log(questionAnswers);
 }
 
 init();
