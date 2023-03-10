@@ -34,9 +34,18 @@ const employeeQuestions = [
         when: (answers) => answers.menu === 'Add Role'
     },
     {
-        type: 'input',
+        type: 'list',
         name: 'roleDepartment',
         message: "What is the department id for this role?",
+        choices: async function() {
+            const departments = await db.promise().query('SELECT * FROM department');
+            return departments[0].map(department => {
+                return {
+                    name: `${department.name}`,
+                    value: department.id
+                }
+            });
+        },
         when: (answers) => answers.menu === 'Add Role'
     },
     {
@@ -52,15 +61,33 @@ const employeeQuestions = [
         when: (answers) => answers.menu === 'Add Employee'
     },
     {
-        type: 'input',
+        type: 'list',
         name: 'employeeRole',
         message: "What is the employee's role?",
+        choices: async function() {
+            const roles = await db.promise().query('SELECT * FROM roles');
+            return roles[0].map(role => {
+                return {
+                    name: `${role.title}`,
+                    value: role.id
+                }
+            });
+        },
         when: (answers) => answers.menu === 'Add Employee'
     },
     {
-        type: 'input',
+        type: 'list',
         name: 'employeeManager',
-        message: "Who is the employee's manager?",
+        message: "Select a manager:",
+        choices: async function() {
+            const employees = await db.promise().query('SELECT * FROM employee');
+            return employees[0].map(employee => {
+                return {
+                    name: `${employee.first_name} ${employee.last_name}`,
+                    value: employee.id
+                }
+            });
+        },
         when: (answers) => answers.menu === 'Add Employee'
     },
     {
@@ -76,9 +103,18 @@ const employeeQuestions = [
         when: (answers) => answers.menu === 'Update Employee Role'
     },
     {
-        type: 'input',
+        type: 'list',
         name: 'employeeUpdateRole',
         message: "What is the employee's new role?",
+        choices: async function() {
+            const roles = await db.promise().query('SELECT * FROM roles');
+            return roles[0].map(role => {
+                return {
+                    name: `${role.title}`,
+                    value: role.id
+                }
+            });
+        },
         when: (answers) => answers.menu === 'Update Employee Role'
     }
 ];
@@ -98,7 +134,6 @@ async function init() {
         const answers = await promptQuestions();
 
         if(await answers.menu === 'Quit') {
-            // questionAnswers.push(answers);
             keepAsking = false;
         } else if (await answers.menu === 'View All Departments') {
             db.query(
@@ -114,7 +149,7 @@ async function init() {
             );
         } else if (await answers.menu === 'View All Roles') {
             db.query(
-                'SELECT * FROM roles',
+                'SELECT roles.id AS role_id, roles.title AS role_title, roles.salary, department.name AS department_name FROM roles LEFT JOIN department ON roles.department_id = department.id',
                 function(err, results, fields) {
                     console.log('\n');
                     console.table(results);
@@ -126,7 +161,11 @@ async function init() {
             );
         } else if (await answers.menu === 'View All Employees') {
             db.query(
-                'SELECT * FROM employee',
+                `SELECT e.id, e.first_name, e.last_name, r.title AS role, d.name AS department, r.salary, CONCAT(m.first_name, ' ', m.last_name) AS manager
+                FROM employee e
+                JOIN roles r ON e.role_id = r.id
+                JOIN department d ON r.department_id = d.id
+                LEFT JOIN employee m ON e.manager_id = m.id`,
                 function(err, results, fields) {
                     console.log('\n');
                     console.table(results);
@@ -163,12 +202,13 @@ async function init() {
             const last = answers.employeeLastName;
             const role = answers.employeeRole;
             const manager = answers.employeeManager;
-
+            // console.log([first, last, role, manager])
             db.query(
                 'INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)',
                 [first, last, role, manager],
                 function(err, results, fields) {
                     console.log('\n');
+                    console.log(err);
                 }
             );
         } else if (await answers.menu === 'Update Employee Role') {
