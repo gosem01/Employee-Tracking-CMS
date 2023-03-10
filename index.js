@@ -1,9 +1,7 @@
 const inquirer = require('inquirer');
-// get the client
 const mysql = require('mysql2');
 const cTable = require('console.table');
 
-// create the connection to database
 const db = mysql.createConnection({
   host: 'localhost',
   user: 'root',
@@ -15,7 +13,7 @@ const employeeQuestions = [
         type: 'list',
         name: 'menu',
         message: "What would you like to do?",
-        choices: ['Add Employee', 'Update Employee Role', 'View All Roles', 'Add Role', 'View All Departments', 'Add Department', 'Quit']
+        choices: ['View All Employees', 'Add Employee', 'Update Employee Role', 'View All Roles', 'Add Role', 'View All Departments', 'Add Department', 'Quit']
     },
     {
         type: 'input',
@@ -25,7 +23,7 @@ const employeeQuestions = [
     },
     {
         type: 'input',
-        name: 'roleName',
+        name: 'roleTitle',
         message: "What is the name of the role?",
         when: (answers) => answers.menu === 'Add Role'
     },
@@ -38,7 +36,7 @@ const employeeQuestions = [
     {
         type: 'input',
         name: 'roleDepartment',
-        message: "What is the department for this role?",
+        message: "What is the department id for this role?",
         when: (answers) => answers.menu === 'Add Role'
     },
     {
@@ -67,6 +65,18 @@ const employeeQuestions = [
     },
     {
         type: 'input',
+        name: 'employeeUpdateFirst',
+        message: "What is the employee's first name",
+        when: (answers) => answers.menu === 'Update Employee Role'
+    },
+    {
+        type: 'input',
+        name: 'employeeUpdateLast',
+        message: "What is the employee's last name",
+        when: (answers) => answers.menu === 'Update Employee Role'
+    },
+    {
+        type: 'input',
         name: 'employeeUpdateRole',
         message: "What is the employee's new role?",
         when: (answers) => answers.menu === 'Update Employee Role'
@@ -82,13 +92,6 @@ const questionAnswers = [];
 
 
 async function init() {
-    // db.query(
-    //     'SELECT * FROM department',
-    //     function(err, results, fields) {
-    //         console.log('\n');
-    //         console.table(results);
-    //     }
-    // );
 
     let keepAsking = true;
     while(keepAsking) {
@@ -118,6 +121,65 @@ async function init() {
                     for(var i = 0; i < results.length; i++) {
                         console.log('\n');
                     }
+                    console.log('\n');
+                }
+            );
+        } else if (await answers.menu === 'View All Employees') {
+            db.query(
+                'SELECT * FROM employee',
+                function(err, results, fields) {
+                    console.log('\n');
+                    console.table(results);
+                    for(var i = 0; i < results.length; i++) {
+                        console.log('\n');
+                    }
+                    console.log('\n');
+                }
+            );
+        } else if (await answers.menu === 'Add Department') {
+            const name = answers.departmentName;
+
+            db.query(
+                'INSERT INTO department (name) VALUES (?)',
+                [name],
+                function(err, results, fields) {
+                    console.log('\n');
+                }
+            );
+        } else if (await answers.menu === 'Add Role') {
+            const title = answers.roleTitle;
+            const salary = answers.roleSalary;
+            const departmentId = answers.roleDepartment;
+
+            db.query(
+                'INSERT INTO roles (title, salary, department_id) VALUES (?, ?, ?)',
+                [title, salary, departmentId],
+                function(err, results, fields) {
+                    console.log('\n');
+                }
+            );
+        } else if (await answers.menu === 'Add Employee') {
+            const first = answers.employeeFirstName;
+            const last = answers.employeeLastName;
+            const role = answers.employeeRole;
+            const manager = answers.employeeManager;
+
+            db.query(
+                'INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)',
+                [first, last, role, manager],
+                function(err, results, fields) {
+                    console.log('\n');
+                }
+            );
+        } else if (await answers.menu === 'Update Employee Role') {
+            const first = answers.employeeUpdateFirst;
+            const last = answers.employeeUpdateLast;
+            const role = answers.employeeUpdateRole;
+
+            db.query(
+                'UPDATE employee SET role_id = ? WHERE first_name = ? AND last_name = ?',
+                [role, first, last],
+                function(err, results, fields) {
                     console.log('\n');
                 }
             );
