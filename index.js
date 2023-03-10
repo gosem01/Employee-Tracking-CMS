@@ -202,7 +202,7 @@ async function init() {
             const last = answers.employeeLastName;
             const role = answers.employeeRole;
             const manager = answers.employeeManager;
-            // console.log([first, last, role, manager])
+
             db.query(
                 'INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)',
                 [first, last, role, manager],
